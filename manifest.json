@@ -1,0 +1,25 @@
+{
+  "name": "Kosmi Helper",
+  "version": "1.0.0",
+  "manifest_version": 2,
+  "description": "Kosmi Helper",
+  "homepage_url": "https://kosmi.io",
+  "icons": {
+    "72": "icons/72.png"
+  },
+  "background": {
+    "scripts": [
+      "background/index.js"
+    ],
+    "persistent": true
+  },
+  "permissions": [
+    "cookies",
+    "tabs",
+    "activeTab",
+    "storage",
+    "webRequest",
+    "webRequestBlocking",
+    "<all_urls>"
+  ]
+}
