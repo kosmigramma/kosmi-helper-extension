@@ -1,3 +1,30 @@
+const KOSMI_DOMAIN = "kosmi.io";
+const capturedUrls = {};
+
+setInterval(() => {
+  console.log(capturedUrls);
+}, 2000);
+
+function getCurrentWindowActiveTabId() {
+  return new Promise((resolve, reject) => {
+    chrome.tabs.query(
+      {
+        currentWindow: true,
+        active: true,
+      },
+      (currentWindowActiveTabs) => {
+        if (!currentWindowActiveTabs) resolve(null);
+        if (!currentWindowActiveTabs.length) resolve(null);
+        try {
+          resolve(currentWindowActiveTabs[0].id);
+        } catch (e) {
+          resolve(null);
+        }
+      }
+    );
+  });
+}
+
 function addHeader(headers, name, value) {
   const head = headers.find((item) => {
     return item.name.toLowerCase() === name.toLowerCase();
@@ -18,16 +45,38 @@ function addHeader(headers, name, value) {
   }
 }
 
-function modifyResHeader(details) {
-  if (details.initiator !== "https://app.kosmi.io") return;
-  if (new URL(details.url).host.endsWith("kosmi.io")) return;
+async function getCapturedUrlsForCurrentTab() {
+  const tabid = await getCurrentWindowActiveTabId();
+  console.log(capturedUrls[tabid]);
+  return capturedUrls[tabid] || [];
+}
+
+function onResponseStarted(details) {
+  const url = new URL(details.url);
+  if (
+    details.type === "media" ||
+    url.pathname.endsWith("m3u8") ||
+    url.pathname.endsWith(".mpd")
+  ) {
+    const tabid = details.tabId;
+    let urls = capturedUrls[tabid];
+    if (!urls) urls = capturedUrls[tabid] = [];
+    if (urls.indexOf(url.href) === -1) {
+      urls.push(url.href);
+    }
+  }
+}
+
+function onHeadersReceived(details) {
+  if (details.initiator !== `https://app.${KOSMI_DOMAIN}`) return;
+  if (new URL(details.url).host.endsWith(KOSMI_DOMAIN)) return;
   if (details.type !== "xmlhttprequest" && details.type !== "media") return;
   const accessControlAllowOriginHeader =
     details.responseHeaders["Access-Control-Allow-Origin"];
   if (accessControlAllowOriginHeader === "*") return;
   if (
     accessControlAllowOriginHeader &&
-    accessControlAllowOriginHeader.indexOf("app.kosmi.io" !== -1)
+    accessControlAllowOriginHeader.indexOf(KOSMI_DOMAIN !== -1)
   )
     return;
   Object.entries({
@@ -52,9 +101,53 @@ function modifyResHeader(details) {
   };
 }
 
-chrome.webRequest.onHeadersReceived.removeListener(modifyResHeader);
+function onMessage(request, sender, sendResponse) {
+  if (request.message == "findURLs") {
+    (async () => {
+      const urls = await getCapturedUrlsForCurrentTab();
+      sendResponse({ urls });
+    })();
+  } else {
+    sendResponse({});
+  }
+  return true;
+}
+
+function onTabClose(tabid) {
+  //delete capturedUrls[tabid];
+}
+
+function onUpdated(tabid, changeInfo, tab) {
+  if (changeInfo.url) {
+    //delete capturedUrls[tabid];
+  }
+}
+
+function onCommitted(details) {
+  if (details.transitionType === "reload") {
+    //delete capturedUrls[details.tabId];
+  }
+}
+
+chrome.tabs.onUpdated.removeListener(onUpdated);
+chrome.tabs.onUpdated.addListener(onUpdated);
+
+chrome.tabs.onRemoved.removeListener(onTabClose);
+chrome.tabs.onRemoved.addListener(onTabClose);
+
+chrome.runtime.onMessage.removeListener(onMessage);
+chrome.runtime.onMessage.addListener(onMessage);
+
+chrome.webRequest.onHeadersReceived.removeListener(onHeadersReceived);
 chrome.webRequest.onHeadersReceived.addListener(
-  modifyResHeader,
+  onHeadersReceived,
   { urls: ["<all_urls>"] },
   ["responseHeaders", "blocking", "extraHeaders"]
 );
+
+chrome.webRequest.onResponseStarted.removeListener(onResponseStarted);
+chrome.webRequest.onResponseStarted.addListener(onResponseStarted, {
+  urls: ["<all_urls>"],
+});
+
+chrome.webNavigation.onCommitted.addListener(onCommitted);

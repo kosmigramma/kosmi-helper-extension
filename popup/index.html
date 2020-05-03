@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="vue.2.5.3.min.js"></script>
+    <style type="text/css">
+      body {
+        background-color: #140e34;
+        margin: 0px;
+        color: white;
+      }
+      #app {
+        width: 260px;
+        height: 200px;
+        padding: 0px;
+        font-size: 16px;
+        user-select: none;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      #kosmilogo {
+        text-align: center;
+        margin: 10px auto;
+      }
+      #kosmilogo img {
+        height: 15px;
+      }
+      #urls {
+          width: 100%;
+          height: 100%;
+          text-align: left;
+          font-size: 10px;
+          display: flex;
+          flex-direction: column;
+      }
+      #urls > div {
+          padding: 0px 20px;
+      }
+      #urls > a {
+          color: white;
+          display: block;
+          padding: 20px;
+          text-decoration: underline;
+          font-weight: 500;
+          word-break: break-all;
+      }
+      #urls > a:hover {
+          color: #fff377;
+      }
+      #nourlmessage {
+          padding: 20px;
+          margin: auto;
+      }
+      button {
+        padding: 10px;
+        border: 3px solid #fff377;
+        background: transparent;
+        color: #fff377;
+        border-radius: 5px;
+        margin: auto;
+        cursor: pointer;
+        font-size: 12px;
+      }
+      button:hover {
+        background-color: #fff377;
+        color: #140e34;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="kosmilogo">
+      <img class="logo" src="./kosmihead.svg" alt="Kosmi Logo" />
+      <img class="logoText" src="./kosmitext.svg" alt="Kosmi" />
+    </div>
+
+    <div id="app"><component :is="screen"> </component></div>
+
+
+    <script type="text/x-template" id="findurlsbutton-template">
+      <button @click="findURLs()">Find direct video URLs on this page</button>
+    </script>
+
+    <script type="text/x-template" id="mainscreen-template">
+        <findurlsbutton/>
+    </script>
+
+    <script type="text/x-template" id="findurlsscreen-template">
+        <div id="urls" v-if="urls.length > 0">
+        <div>To use the below links in Cowatch, simply right click them and 'Copy link address'</div>
+        <a target="_blank" v-for="url in urls" :href="url.href">
+            {{url.href}}
+        </a>
+        </div>
+        <div id="urls" v-else>
+        <div id="nourlmessage">No URL found. Make sure to start the video playback to detect the URL.</div>
+        </div>
+    </script>
+
+    <script src="main.js"></script>
+  </body>
+</html>
