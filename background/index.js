@@ -1,10 +1,6 @@
 const KOSMI_DOMAIN = "kosmi.io";
 const capturedUrls = {};
 
-setInterval(() => {
-  console.log(capturedUrls);
-}, 2000);
-
 function getCurrentWindowActiveTabId() {
   return new Promise((resolve, reject) => {
     chrome.tabs.query(
@@ -47,7 +43,6 @@ function addHeader(headers, name, value) {
 
 async function getCapturedUrlsForCurrentTab() {
   const tabid = await getCurrentWindowActiveTabId();
-  console.log(capturedUrls[tabid]);
   return capturedUrls[tabid] || [];
 }
 
