@@ -63,17 +63,31 @@ function onResponseStarted(details) {
 }
 
 function onHeadersReceived(details) {
-  if (details.initiator !== `https://app.${KOSMI_DOMAIN}`) return;
+  const APP_URL = `https://app.${KOSMI_DOMAIN}`;
+  if (details.initiator) {
+    if (details.initiator !== APP_URL) {
+      return;
+    }
+  }
+  if (details.originUrl) {
+    if (!details.originUrl.startsWith(APP_URL)) {
+      return;
+    }
+  }
   if (new URL(details.url).host.endsWith(KOSMI_DOMAIN)) return;
   if (details.type !== "xmlhttprequest" && details.type !== "media") return;
+
   const accessControlAllowOriginHeader =
     details.responseHeaders["Access-Control-Allow-Origin"];
+
   if (accessControlAllowOriginHeader === "*") return;
+
   if (
     accessControlAllowOriginHeader &&
     accessControlAllowOriginHeader.indexOf(KOSMI_DOMAIN !== -1)
   )
     return;
+
   Object.entries({
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Credentials": true,
@@ -109,18 +123,18 @@ function onMessage(request, sender, sendResponse) {
 }
 
 function onTabClose(tabid) {
-  //delete capturedUrls[tabid];
+  delete capturedUrls[tabid];
 }
 
 function onUpdated(tabid, changeInfo, tab) {
   if (changeInfo.url) {
-    //delete capturedUrls[tabid];
+    delete capturedUrls[tabid];
   }
 }
 
 function onCommitted(details) {
   if (details.transitionType === "reload") {
-    //delete capturedUrls[details.tabId];
+    delete capturedUrls[details.tabId];
   }
 }
 
@@ -134,11 +148,19 @@ chrome.runtime.onMessage.removeListener(onMessage);
 chrome.runtime.onMessage.addListener(onMessage);
 
 chrome.webRequest.onHeadersReceived.removeListener(onHeadersReceived);
-chrome.webRequest.onHeadersReceived.addListener(
-  onHeadersReceived,
-  { urls: ["<all_urls>"] },
-  ["responseHeaders", "blocking", "extraHeaders"]
-);
+try {
+  chrome.webRequest.onHeadersReceived.addListener(
+    onHeadersReceived,
+    { urls: ["<all_urls>"] },
+    ["responseHeaders", "blocking", "extraHeaders"]
+  );
+} catch (e) {
+  chrome.webRequest.onHeadersReceived.addListener(
+    onHeadersReceived,
+    { urls: ["<all_urls>"] },
+    ["responseHeaders", "blocking"]
+  );
+}
 
 chrome.webRequest.onResponseStarted.removeListener(onResponseStarted);
 chrome.webRequest.onResponseStarted.addListener(onResponseStarted, {
