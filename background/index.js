@@ -1,9 +1,10 @@
 const KOSMI_DOMAIN = "kosmi.io";
 const capturedUrls = {};
+const browser = window.browser || window.chrome;
 
 function getCurrentWindowActiveTabId() {
   return new Promise((resolve, reject) => {
-    chrome.tabs.query(
+    browser.tabs.query(
       {
         currentWindow: true,
         active: true,
@@ -138,33 +139,33 @@ function onCommitted(details) {
   }
 }
 
-chrome.tabs.onUpdated.removeListener(onUpdated);
-chrome.tabs.onUpdated.addListener(onUpdated);
+browser.tabs.onUpdated.removeListener(onUpdated);
+browser.tabs.onUpdated.addListener(onUpdated);
 
-chrome.tabs.onRemoved.removeListener(onTabClose);
-chrome.tabs.onRemoved.addListener(onTabClose);
+browser.tabs.onRemoved.removeListener(onTabClose);
+browser.tabs.onRemoved.addListener(onTabClose);
 
-chrome.runtime.onMessage.removeListener(onMessage);
-chrome.runtime.onMessage.addListener(onMessage);
+browser.runtime.onMessage.removeListener(onMessage);
+browser.runtime.onMessage.addListener(onMessage);
 
-chrome.webRequest.onHeadersReceived.removeListener(onHeadersReceived);
+browser.webRequest.onHeadersReceived.removeListener(onHeadersReceived);
 try {
-  chrome.webRequest.onHeadersReceived.addListener(
+  browser.webRequest.onHeadersReceived.addListener(
     onHeadersReceived,
     { urls: ["<all_urls>"] },
     ["responseHeaders", "blocking", "extraHeaders"]
   );
 } catch (e) {
-  chrome.webRequest.onHeadersReceived.addListener(
+  browser.webRequest.onHeadersReceived.addListener(
     onHeadersReceived,
     { urls: ["<all_urls>"] },
     ["responseHeaders", "blocking"]
   );
 }
 
-chrome.webRequest.onResponseStarted.removeListener(onResponseStarted);
-chrome.webRequest.onResponseStarted.addListener(onResponseStarted, {
+browser.webRequest.onResponseStarted.removeListener(onResponseStarted);
+browser.webRequest.onResponseStarted.addListener(onResponseStarted, {
   urls: ["<all_urls>"],
 });
 
-chrome.webNavigation.onCommitted.addListener(onCommitted);
+browser.webNavigation.onCommitted.addListener(onCommitted);

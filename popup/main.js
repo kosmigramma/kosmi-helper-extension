@@ -1,6 +1,8 @@
+const browser = window.browser || window.chrome;
+
 function findURLs() {
   return new Promise((resolve) => {
-    chrome.runtime.sendMessage({ message: "findURLs" }, (response) => {
+    browser.runtime.sendMessage({ message: "findURLs" }, (response) => {
       const urls = response.urls
         .map((url) => new URL(url))
         .map((url) => {
@@ -40,7 +42,7 @@ Vue.component("findurlsscreen", {
   },
 });
 
-var app = new Vue({
+const app = new Vue({
   el: "#app",
   data: { screen: "mainscreen" },
 });
